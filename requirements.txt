@@ -6,3 +6,4 @@ plotly
 PyMuPDF
 python-docx
 gunicorn
+flask-cors
