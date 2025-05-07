@@ -1,37 +1,52 @@
-import json
-import plotly.express as px
+import React, { useEffect, useRef } from "react";
+import Plotly from "plotly.js-dist-min";
 
-def build_charts(groq_output):
-    charts = []
+interface Chart {
+  type: "bar" | "line" | "pie";
+  title: string;
+  x: any[];
+  y: any[];
+}
 
-    try:
-        chart_data = json.loads(groq_output)
-    except json.JSONDecodeError:
-        return ["<p><b>Error:</b> Groq returned invalid JSON. Please try again.</p>"]
+interface ChartsDisplayProps {
+  charts: Chart[];
+}
 
-    for i, chart in enumerate(chart_data):
-        try:
-            chart_type = chart.get("type", "").lower()
-            title = chart.get("title", f"Chart {i+1}")
-            x = chart.get("x", [])
-            y = chart.get("y", [])
+const ChartsDisplay: React.FC<ChartsDisplayProps> = ({ charts }) => {
+  const containerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-            if chart_type == "bar":
-                fig = px.bar(x=x, y=y, title=title)
-            elif chart_type == "line":
-                fig = px.line(x=x, y=y, title=title)
-            elif chart_type == "pie":
-                fig = px.pie(names=x, values=y, title=title)
-            else:
-                charts.append(f"<p><b>Unsupported chart type:</b> {chart_type}</p>")
-                continue
+  useEffect(() => {
+    charts.forEach((chart, index) => {
+      const container = containerRefs.current[index];
+      if (!container) return;
 
-            charts.append(fig.to_html(full_html=False))
+      const plotData =
+        chart.type === "pie"
+          ? [{ labels: chart.x, values: chart.y, type: chart.type }]
+          : [{ x: chart.x, y: chart.y, type: chart.type }];
 
-        except Exception as e:
-            charts.append(f"<p><b>Chart rendering error:</b> {str(e)}</p>")
+      const layout = {
+        title: chart.title,
+        autosize: true,
+        margin: { t: 40, l: 40, r: 20, b: 40 }
+      };
 
-    if not charts:
-        charts.append("<p><b>No valid charts generated.</b></p>")
+      Plotly.newPlot(container, plotData, layout, { responsive: true });
+    });
+  }, [charts]);
 
-    return charts
+  return (
+    <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-2">
+      {charts.map((_, index) => (
+        <div
+          key={index}
+          ref={(el) => (containerRefs.current[index] = el)}
+          className="rounded-lg border p-4 bg-white shadow-md"
+          style={{ minHeight: "350px" }}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default ChartsDisplay;
