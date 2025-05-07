@@ -4,7 +4,7 @@ import pandas as pd
 from docx import Document
 import io
 
-def extract_file_data(file):
+def parse_file(file):
     filename = file.filename.lower()
 
     if filename.endswith('.pdf'):
