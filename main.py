@@ -1,40 +1,41 @@
 from flask import Flask, request, jsonify
-from utils.file_parser import extract_file_data
-from utils.groq_client import query_groq
-from utils.chart_builder import build_charts
-
 from flask_cors import CORS
+from utils.file_parser import parse_file
+from utils.groq_client import query_groq
+import json
 
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin requests from Bolt
+CORS(app)
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    if 'file' not in request.files:
+@app.route("/", methods=["GET"])
+def home():
+    return "Doc to Visuals backend is running."
+
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
 
-    uploaded_file = request.files['file']
-    if uploaded_file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
 
     try:
         # Step 1: Extract content
-        content = extract_file_data(uploaded_file)
+        content = parse_file(file)
 
-        # Step 2: Send to Groq and get chart suggestions
-        groq_response = query_groq(content)
+        # Step 2: Send to Groq
+        groq_output = query_groq(content)
 
-        # Step 3: Build Plotly charts as HTML strings
-        charts = build_charts(groq_response)
+        # Step 3: Parse JSON string into Python list
+        try:
+            chart_data = json.loads(groq_output)
+        except json.JSONDecodeError:
+            chart_data = []
 
-        return jsonify({"charts": charts}), 200
+        # Step 4: Return raw chart data
+        return jsonify({"charts": chart_data})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route('/')
-def home():
-    return jsonify({"message": "Welcome to the Doc-to-Viz API. POST a file to /upload"}), 200
-
-if __name__ == '__main__':
-    app.run(debug=True)
