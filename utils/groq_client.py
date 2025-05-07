@@ -16,27 +16,23 @@ def query_groq(text):
         "Content-Type": "application/json"
     }
 
-    prompt = f"""Given this content:
-
-{text}
-
-Return up to 5 charts as a raw JSON array.
-Each chart should follow this format:
-{{
-  "type": "bar" | "line" | "pie",
-  "title": "...",
-  "x": [...],
-  "y": [...]
-}}
-
-Guidelines:
-- Use "bar" or "line" for time-series data like Revenue, ARPU, Subscribers, Churn.
-- Use "pie" only when representing parts of a whole (e.g. Revenue Breakdown, Expense Distribution).
-- Titles must clearly describe the chart content.
-- Only include well-structured charts (x and y must be arrays of equal length).
-
-Return ONLY the JSON array. Do not include explanation or markdown.
-"""
+    prompt = (
+        f"Given this content:\n\n{text}\n\n"
+        "Return up to 5 charts as a raw JSON array.\n"
+        "Each chart should follow this format:\n"
+        "{\n"
+        '  \"type\": \"bar\" | \"line\" | \"pie\",\n'
+        '  \"title\": \"...\",\n'
+        '  \"x\": [...],\n'
+        '  \"y\": [...]\n'
+        "}\n\n"
+        "Guidelines:\n"
+        "- Use \"bar\" or \"line\" for time-series data like Revenue, ARPU, Subscribers, Churn.\n"
+        "- Use \"pie\" only when representing parts of a whole (e.g. Revenue Breakdown, Expense Distribution).\n"
+        "- Titles must clearly describe the chart content.\n"
+        "- Only include well-structured charts (x and y must be arrays of equal length).\n\n"
+        "Return ONLY the JSON array. Do not include explanation or markdown."
+    )
 
     data = {
         "model": "mixtral-8x7b-32768",
@@ -54,7 +50,6 @@ Return ONLY the JSON array. Do not include explanation or markdown.
             headers=headers,
             json=data
         )
-
         response.raise_for_status()
         raw_output = response.json()["choices"][0]["message"]["content"]
         print("Raw Groq Output:\n", raw_output)
