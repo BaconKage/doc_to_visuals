@@ -45,6 +45,7 @@ Do NOT include any explanation or extra text — only the JSON array.
     try:
         res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data)
         raw_output = res.json()["choices"][0]["message"]["content"]
+        print("Raw Groq Output:\n", raw_output)  # ✅ moved after API response
         return clean_json_response(raw_output)
     except Exception as e:
         return f"[{{\"type\": \"error\", \"title\": \"Groq Error\", \"x\": [], \"y\": [], \"error\": \"{str(e)}\"}}]"
