@@ -1,16 +1,8 @@
 import requests
 import os
-import re
 from dotenv import load_dotenv
 
 load_dotenv()
-
-def clean_json_response(raw_text):
-    """
-    Extracts the first JSON array from the LLM output using regex.
-    """
-    match = re.search(r"\[.*\]", raw_text, re.DOTALL)
-    return match.group(0) if match else "[]"
 
 def query_groq(text):
     headers = {
@@ -18,34 +10,40 @@ def query_groq(text):
         "Content-Type": "application/json"
     }
 
-    prompt = f"""Given this content:
+    prompt = f"""You are a data visualization expert.
+
+Given this content:
 
 {text}
 
-Return ONLY a raw JSON array of up to 3 charts.
-Each chart must be an object like:
+Return ONLY a valid JSON array of up to 3 charts.
+Each chart should be a JSON object like:
 {{
   "type": "bar" | "line" | "pie",
-  "title": "...",
-  "x": [...],
-  "y": [...]
+  "title": "Chart Title",
+  "x": ["Label1", "Label2", ...],
+  "y": [Value1, Value2, ...]
 }}
 
-Do NOT include any explanation or extra text — only the JSON array.
+⚠️ Do NOT include any explanation or extra text — only return the raw JSON array itself.
 """
 
     data = {
         "model": "llama3-8b-8192",
         "messages": [
-            {"role": "system", "content": "You are a data visualization expert."},
             {"role": "user", "content": prompt}
         ]
     }
 
     try:
-        res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data)
-        raw_output = res.json()["choices"][0]["message"]["content"]
-        print("Raw Groq Output:\n", raw_output)  # ✅ moved after API response
-        return clean_json_response(raw_output)
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=data
+        )
+        content = response.json()["choices"][0]["message"]["content"]
+        print("Raw Groq Chart Output:\n", content)  # For debugging
+        return content  # returning as JSON string
     except Exception as e:
-        return f"[{{\"type\": \"error\", \"title\": \"Groq Error\", \"x\": [], \"y\": [], \"error\": \"{str(e)}\"}}]"
+        print("Error from Groq:", e)
+        return "[]"
