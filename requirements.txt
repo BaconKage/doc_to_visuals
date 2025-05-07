@@ -1,9 +1,8 @@
 Flask
+flask-cors
 python-dotenv
 requests
 pandas
-plotly
 PyMuPDF
 python-docx
 gunicorn
-flask-cors
