@@ -36,7 +36,7 @@ def query_groq(text):
     ]
 
     payload = {
-        "model": "mixtral-8x7b-32768",
+        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
         "messages": messages,
         "temperature": 0.3,
         "max_tokens": 1024,
