@@ -5,3 +5,4 @@ pandas
 plotly
 PyMuPDF
 python-docx
+gunicorn
