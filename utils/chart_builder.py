@@ -1,25 +1,37 @@
-
 import json
 import plotly.express as px
 
 def build_charts(groq_output):
     charts = []
+
     try:
         chart_data = json.loads(groq_output)
     except json.JSONDecodeError:
-        return ["<p>Error: Groq returned invalid JSON.</p>"]
+        return ["<p><b>Error:</b> Groq returned invalid JSON. Please try again.</p>"]
 
-    for chart in chart_data:
+    for i, chart in enumerate(chart_data):
         try:
-            if chart['type'] == 'bar':
-                fig = px.bar(x=chart['x'], y=chart['y'], title=chart['title'])
-            elif chart['type'] == 'line':
-                fig = px.line(x=chart['x'], y=chart['y'], title=chart['title'])
-            elif chart['type'] == 'pie':
-                fig = px.pie(names=chart['x'], values=chart['y'], title=chart['title'])
+            chart_type = chart.get("type", "").lower()
+            title = chart.get("title", f"Chart {i+1}")
+            x = chart.get("x", [])
+            y = chart.get("y", [])
+
+            if chart_type == "bar":
+                fig = px.bar(x=x, y=y, title=title)
+            elif chart_type == "line":
+                fig = px.line(x=x, y=y, title=title)
+            elif chart_type == "pie":
+                fig = px.pie(names=x, values=y, title=title)
             else:
+                charts.append(f"<p><b>Unsupported chart type:</b> {chart_type}</p>")
                 continue
+
             charts.append(fig.to_html(full_html=False))
+
         except Exception as e:
-            charts.append(f"<p>Chart render error: {str(e)}</p>")
+            charts.append(f"<p><b>Chart rendering error:</b> {str(e)}</p>")
+
+    if not charts:
+        charts.append("<p><b>No valid charts generated.</b></p>")
+
     return charts
