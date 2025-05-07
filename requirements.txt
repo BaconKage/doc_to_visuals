@@ -6,3 +6,4 @@ pandas
 PyMuPDF
 python-docx
 gunicorn
+pdfplumber
