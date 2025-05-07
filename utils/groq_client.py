@@ -40,7 +40,8 @@ def query_groq(text):
         "messages": messages,
         "temperature": 0.3,
         "max_tokens": 1024,
-        "stop": None
+        "stop": []
+
     }
 
     try:
