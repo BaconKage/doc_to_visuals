@@ -1,6 +1,7 @@
 import requests
 import os
 import re
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -46,12 +47,11 @@ Ensure x-axis values are valid strings (e.g., years or categories).
     print("Raw Groq Output:\n", raw_output)
 
     try:
-        import json
         parsed_charts = json.loads(clean_json_response(raw_output))
 
-        # ✅ Sanitize x labels to always be strings
+        # ✅ Ensure all x values are stringified
         for chart in parsed_charts:
-            chart["x"] = [str(x) for x in chart.get("x", [])]
+            chart["x"] = list(map(str, chart.get("x", [])))
             chart["y"] = chart.get("y", [])
 
         return parsed_charts
