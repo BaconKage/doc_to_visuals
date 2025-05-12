@@ -1,29 +1,39 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils.file_parser import parse_file
+from utils.chart_builder import build_charts
 from utils.groq_client import query_groq
+import json
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
-def home():
-    return "Doc Visualizer API is running."
-
-@app.route("/upload", methods=["POST"])
+@app.route('/upload', methods=['POST'])
 def upload():
     try:
-        file = request.files["file"]
-        if not file:
-            return jsonify({"error": "No file provided"}), 400
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part in the request'}), 400
 
-        content = parse_file(file)
-        charts = query_groq(content)
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
 
-        return jsonify({"charts": charts})  # ✅ JSON-safe dictionary return
+        text = parse_file(file)
+        llm_response = query_groq(text)
+        charts_json = build_charts(llm_response)
+
+        try:
+            parsed_charts = json.loads(charts_json)
+        except json.JSONDecodeError:
+            return jsonify({'error': 'Invalid JSON from LLM'}), 500
+
+        return jsonify(parsed_charts)
+
     except Exception as e:
-        print("Error during upload:", str(e))
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/')
+def home():
+    return "Doc Visualizer API Running"
+
+app.run(debug=False, host="0.0.0.0", port=10000)
