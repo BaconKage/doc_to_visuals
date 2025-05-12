@@ -1,52 +1,19 @@
-import React, { useEffect, useRef } from "react";
-import Plotly from "plotly.js-dist-min";
+import json
 
-interface Chart {
-  type: "bar" | "line" | "pie";
-  title: string;
-  x: any[];
-  y: any[];
-}
-
-interface ChartsDisplayProps {
-  charts: Chart[];
-}
-
-const ChartsDisplay: React.FC<ChartsDisplayProps> = ({ charts }) => {
-  const containerRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    charts.forEach((chart, index) => {
-      const container = containerRefs.current[index];
-      if (!container) return;
-
-      const plotData =
-        chart.type === "pie"
-          ? [{ labels: chart.x, values: chart.y, type: chart.type }]
-          : [{ x: chart.x, y: chart.y, type: chart.type }];
-
-      const layout = {
-        title: chart.title,
-        autosize: true,
-        margin: { t: 40, l: 40, r: 20, b: 40 }
-      };
-
-      Plotly.newPlot(container, plotData, layout, { responsive: true });
-    });
-  }, [charts]);
-
-  return (
-    <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-2">
-      {charts.map((_, index) => (
-        <div
-          key={index}
-          ref={(el) => (containerRefs.current[index] = el)}
-          className="rounded-lg border p-4 bg-white shadow-md"
-          style={{ minHeight: "350px" }}
-        />
-      ))}
-    </div>
-  );
-};
-
-export default ChartsDisplay;
+def build_charts(response_text):
+    """
+    Cleans and ensures the raw LLM output is a valid JSON string for chart rendering.
+    """
+    try:
+        charts = json.loads(response_text)
+        if isinstance(charts, list):
+            # Optionally validate that all required fields exist
+            for chart in charts:
+                if not all(k in chart for k in ("type", "title", "x", "y")):
+                    raise ValueError("Missing required keys in chart object.")
+            return json.dumps(charts)
+        else:
+            raise ValueError("Response is not a list.")
+    except Exception as e:
+        print("Error building charts:", e)
+        return json.dumps([])
